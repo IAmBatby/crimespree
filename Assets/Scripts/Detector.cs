@@ -18,6 +18,8 @@ public class Detector : MonoBehaviour
     public bool detected;
     public Detectable detectable;
 
+    [FoldoutGroup("References")] public GameObject detectionEyes;
+    [FoldoutGroup("References")] public LayerMask detectionMask;
     [FoldoutGroup("References")] public Collider detectorZone;
     [FoldoutGroup("References")] public Image radialBarLeft;
     [FoldoutGroup("References")] public Image radialBarRight;
@@ -72,28 +74,39 @@ public class Detector : MonoBehaviour
         {
             if (isInRange)
             {
-                Debug.Log("Detecting");
-                detectionRate = Mathf.Lerp(detectionRate, 200, detectionRateMultiplier * Time.deltaTime);
-                icon.gameObject.SetActive(true);
-                radialBarLeft.gameObject.SetActive(true);
-                radialBarRight.gameObject.SetActive(true);
-            }
-
-            if (isDecreasing == true)
-            {
-                detectionRate = Mathf.Lerp(detectionRate, -1, (detectionRateMultiplier * 10) * Time.deltaTime);
-            }
-
-            if (detectionRate <= 0)
-            {
-                isDecreasing = false;
-                icon.gameObject.SetActive(false);
-                if (detectable != null)
+                Debug.DrawLine(detectionEyes.transform.position, detectable.transform.position);
+                if(Physics.Raycast(detectionEyes.transform.position, detectable.transform.position - detectionEyes.transform.position, out RaycastHit hit, Mathf.Infinity, detectionMask, QueryTriggerInteraction.Collide))
                 {
-                    detectable.detectionRate = 0;
-                    detectable = null;
+                    Debug.Log("Hitting " + hit.transform.gameObject);
+                    Debug.DrawLine(detectionEyes.transform.position, hit.transform.position);
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        Debug.Log("Detecting");
+                        detectionRate = Mathf.Lerp(detectionRate, 200, detectionRateMultiplier * Time.deltaTime);
+                        icon.gameObject.SetActive(true);
+                        radialBarLeft.gameObject.SetActive(true);
+                        radialBarRight.gameObject.SetActive(true);
+                    }
                 }
-                detectionRate = 0;
+            }
+            else
+            {
+                if (isDecreasing == true)
+                {
+                    detectionRate = Mathf.Lerp(detectionRate, -1, (detectionRateMultiplier * 10) * Time.deltaTime);
+                }
+
+                if (detectionRate <= 0)
+                {
+                    isDecreasing = false;
+                    icon.gameObject.SetActive(false);
+                    if (detectable != null)
+                    {
+                        detectable.detectionRate = 0;
+                        detectable = null;
+                    }
+                    detectionRate = 0;
+                }
             }
 
             if (detectionRate >= 100)
